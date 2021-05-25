@@ -1,0 +1,109 @@
+//"标头.h"
+struct BinaryData { double Data; BinaryData* Next; };
+//输入二进制数据
+int InputBinaryData(BinaryData*&);
+//交换元素
+void Swap(double&, double&);
+//对链表从小到大进行排序
+void ListSortUp(BinaryData*&);
+//创建二进制文件
+void CreateAscendingOrderBinaryFile(char*);
+//将两个升序的二进制文件合并
+void CombineAscendingOrderBinaryFile(const char*, const char*);
+
+//实现.cpp
+#include <iostream>
+#include <fstream>
+#include "标头.h"
+using namespace std;
+//输入二进制数据同时返回链表长度
+int InputBinaryData(BinaryData*& HeadOfList)
+{
+	int ListLength = 0;
+	BinaryData* NewPoint = NULL, * LinkPoint = NULL;
+	cout << "请输入数据,结束请按\"Ctrl+Z\"组合键:";
+	NewPoint = new BinaryData;
+	while (cin >> NewPoint->Data)
+	{
+		if (HeadOfList == NULL) { HeadOfList = NewPoint; }
+		else
+		{
+			if (LinkPoint != NULL) { LinkPoint->Next = NewPoint; }
+			else { cout << "指针出错啦...\n"; abort(); }
+		}
+		LinkPoint = NewPoint;
+		ListLength = ListLength + 1;
+		NewPoint = new BinaryData;
+	}
+	if (LinkPoint != NULL) { LinkPoint->Next = NULL; }
+	delete NewPoint;
+	NewPoint = NULL;
+	return ListLength;
+}
+//交换元素
+void Swap(double& Data1, double& Data2)
+{
+	double ExchangeData = 0.0;
+	ExchangeData = Data1;
+	Data1 = Data2;
+	Data2 = ExchangeData;
+}
+//对链表进行从小到大排序
+//【想法】:我最初的想法是比较两个链表中的数据,然后交换链表中的结点,但是实际上不用交换结点,只需要交换结点中的数据就行了
+void ListSortUp(BinaryData*& HeadOfList)
+{
+	BinaryData* FormerPoint = NULL, * LatterPoint = NULL;
+	for (FormerPoint = HeadOfList; FormerPoint != NULL && FormerPoint->Next != NULL; FormerPoint = FormerPoint->Next)
+	{
+		for (LatterPoint = FormerPoint->Next; LatterPoint != NULL; LatterPoint = LatterPoint->Next)
+		{
+			if (FormerPoint->Data > LatterPoint->Data) { Swap(FormerPoint->Data, LatterPoint->Data); }
+		}
+	}
+}
+//创建二进制文件
+void CreateAscendingOrderBinaryFile(char* FileName)
+{
+	int ListLength = 0, Subscript = 0;
+	BinaryData* HeadOfList = NULL;
+	fstream BinaryFile;
+	//将流的状态清除,这么做是为了能够打开下一个文件
+	BinaryFile.clear();
+	BinaryFile.seekg(0, ios::beg);
+	//输入文件名
+	cout << "请输入文件:";
+	FileName = new char[100];
+	cin.getline(FileName, 100);
+	//打开文件
+	BinaryFile.open(FileName, ios::out | ios::binary);
+	if (!BinaryFile) { cerr << "文件无法创建或打开...\n"; abort(); }
+	//输入数据
+	ListLength = InputBinaryData(HeadOfList);
+	//将数据进行排列
+	ListSortUp(HeadOfList);
+	//将数据写入二进制文件
+	//这里直接对头结点操作的原因是这个链表只是用来储存的,不需要保存下来
+	for (; Subscript < ListLength; Subscript = Subscript + 1) { BinaryFile.write((char*)&HeadOfList->Data, sizeof(double)); cout << HeadOfList->Data << " "; HeadOfList = HeadOfList->Next; }
+	//关闭文件
+	BinaryFile.close();
+
+}
+//将两个升序的二进制文件合并
+void CombineAscendingOrderBinaryFile(const char* File1, const char* File2)
+{
+	
+}
+
+//主函数.cpp
+#include <iostream>
+#include <fstream>
+#include "标头.h"
+using namespace std;
+int main()
+{
+	char* File1 = NULL, * File2 = NULL; 
+	CreateAscendingOrderBinaryFile(File1);
+	CreateAscendingOrderBinaryFile(File2);
+	delete[]File1;
+	delete[]File2;
+}
