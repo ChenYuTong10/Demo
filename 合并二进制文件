@@ -91,7 +91,66 @@ void CreateAscendingOrderBinaryFile(char* FileName)
 //将两个升序的二进制文件合并
 void CombineAscendingOrderBinaryFile(const char* File1, const char* File2)
 {
-	
+	int LineFeed = 0;
+	double File1Data = 0.0, File2Data = 0.0;
+	long File1_End = 0, File2_End = 0;
+	fstream BinaryFile1, BinaryFile2, CombinedBinaryFile;
+	//输入文件名
+	cout << "请输入合并文件:";
+	CombinedFile = new char[100];
+	cin.getline(CombinedFile, 100);
+	//打开文件
+	BinaryFile1.open(File1, ios::in | ios::binary);
+	BinaryFile2.open(File2, ios::in | ios::binary);
+	CombinedBinaryFile.open(CombinedFile, ios::out | ios::binary);
+	if (!BinaryFile1 || !BinaryFile2 || !CombinedBinaryFile) { cerr << "文件无法创建或打开...\n"; abort(); }
+	//记录结束的位置
+	BinaryFile1.seekg(0, ios::end);	//将读指针移动到文件末尾
+	File1_End = BinaryFile1.tellg();//返回位置信息
+	BinaryFile1.seekg(0, ios::beg);	//将读指针移回文件开头
+	BinaryFile2.seekg(0, ios::end);
+	File2_End = BinaryFile2.tellg();
+	BinaryFile2.seekg(0, ios::beg);
+	//开始比较数据(这是一个算法)
+	cout << "写入的数据有:\n";
+	while (long(BinaryFile1.tellg()) != File1_End && long(BinaryFile2.tellg()) != File2_End)
+	{
+		BinaryFile1.read((char*)&File1Data, sizeof(double));
+		BinaryFile2.read((char*)&File2Data, sizeof(double));
+		if (File1Data < File2Data)
+		{
+			CombinedBinaryFile.write((char*)&File1Data, sizeof(double)); 
+			cout << File1Data << " ";
+			//由这个算法的原理可得,这里的"BinaryFile2"的读指针不应该移动,同理下面的"BinaryFile1"不能移动,所以要回退一个数据的字节大小
+			BinaryFile2.seekg(-long(sizeof(double)), ios::cur);	//"-"表示往前移动
+		}
+		else
+		{
+			CombinedBinaryFile.write((char*)&File2Data, sizeof(double));
+			cout << File2Data << " ";
+			BinaryFile1.seekg(-long(sizeof(double)), ios::cur);
+		}
+		LineFeed = LineFeed + 1;
+		if (LineFeed % 5 == 0) { cout << "\n"; }
+	}
+	//将剩下的元素写入文件
+	while (BinaryFile1.tellg() != File1_End)
+	{
+		BinaryFile1.read((char*)&File1Data, sizeof(double));
+		CombinedBinaryFile.write((char*)&File1Data, sizeof(double));
+		cout << File1Data << " ";
+	}
+	while (BinaryFile2.tellg() != File2_End)
+	{
+		BinaryFile2.read((char*)&File2Data, sizeof(double));
+		CombinedBinaryFile.write((char*)&File2Data, sizeof(double)); 
+		cout << File2Data << " "; 
+	}
+	cout << "\n文件合并成功...";
+	//关闭文件
+	BinaryFile1.close();
+	BinaryFile2.close();
+	CombinedBinaryFile.close();
 }
 
 //主函数.cpp
@@ -101,9 +160,13 @@ void CombineAscendingOrderBinaryFile(const char* File1, const char* File2)
 using namespace std;
 int main()
 {
-	char* File1 = NULL, * File2 = NULL; 
+	char* File1 = NULL, * File2 = NULL, * CombinedFile = NULL;
 	CreateAscendingOrderBinaryFile(File1);
+	cin.clear();
+	cin.sync();
 	CreateAscendingOrderBinaryFile(File2);
+	CombineAscendingOrderBinaryFile(File1, File2, CombinedFile);
 	delete[]File1;
 	delete[]File2;
+	delete[]CombinedFile;
 }
