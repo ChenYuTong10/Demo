@@ -7,9 +7,9 @@ void Swap(double&, double&);
 //对链表从小到大进行排序
 void ListSortUp(BinaryData*&);
 //创建二进制文件
-void CreateAscendingOrderBinaryFile(char*);
+char* CreateAscendingOrderBinaryFile(char*);
 //将两个升序的二进制文件合并
-void CombineAscendingOrderBinaryFile(const char*, const char*);
+char* CombineAscendingOrderBinaryFile(const char*, const char*, char*);
 
 //实现.cpp
 #include <iostream>
@@ -21,10 +21,13 @@ int InputBinaryData(BinaryData*& HeadOfList)
 {
 	int ListLength = 0;
 	BinaryData* NewPoint = NULL, * LinkPoint = NULL;
-	cout << "请输入数据,结束请按\"Ctrl+Z\"组合键:";
-	NewPoint = new BinaryData;
-	while (cin >> NewPoint->Data)
+	cout << "请输入数据,结束请输入\"0\":";
+	//对不起,能力不够,原本打算在"while"中使用"cin>>NewPoint->Data",但是有无法解决的Bug,原来版本的代码请登录"Gitee"仓库.
+	while (1)
 	{
+		NewPoint = new BinaryData;
+		cin >> NewPoint->Data;
+		if (NewPoint->Data == 0) { break; }
 		if (HeadOfList == NULL) { HeadOfList = NewPoint; }
 		else
 		{
@@ -35,6 +38,7 @@ int InputBinaryData(BinaryData*& HeadOfList)
 		ListLength = ListLength + 1;
 		NewPoint = new BinaryData;
 	}
+	cin.clear();
 	if (LinkPoint != NULL) { LinkPoint->Next = NULL; }
 	delete NewPoint;
 	NewPoint = NULL;
@@ -62,18 +66,15 @@ void ListSortUp(BinaryData*& HeadOfList)
 	}
 }
 //创建二进制文件
-void CreateAscendingOrderBinaryFile(char* FileName)
+char* CreateAscendingOrderBinaryFile(char* FileName)
 {
-	int ListLength = 0, Subscript = 0;
+	int ListLength = 0, Subscript = 0, LineFeed = 0;
 	BinaryData* HeadOfList = NULL;
 	fstream BinaryFile;
-	//将流的状态清除,这么做是为了能够打开下一个文件
-	BinaryFile.clear();
-	BinaryFile.seekg(0, ios::beg);
 	//输入文件名
 	cout << "请输入文件:";
 	FileName = new char[100];
-	cin.getline(FileName, 100);
+	cin >> FileName;
 	//打开文件
 	BinaryFile.open(FileName, ios::out | ios::binary);
 	if (!BinaryFile) { cerr << "文件无法创建或打开...\n"; abort(); }
@@ -83,13 +84,23 @@ void CreateAscendingOrderBinaryFile(char* FileName)
 	ListSortUp(HeadOfList);
 	//将数据写入二进制文件
 	//这里直接对头结点操作的原因是这个链表只是用来储存的,不需要保存下来
-	for (; Subscript < ListLength; Subscript = Subscript + 1) { BinaryFile.write((char*)&HeadOfList->Data, sizeof(double)); cout << HeadOfList->Data << " "; HeadOfList = HeadOfList->Next; }
+	cout << "写入的数据有:\n";
+	for (; Subscript < ListLength; Subscript = Subscript + 1)
+	{
+		BinaryFile.write((char*)&HeadOfList->Data, sizeof(double));
+		cout << HeadOfList->Data << " "; 
+		//控制每行数据的个数
+		LineFeed = LineFeed + 1;
+		if (LineFeed % 5 == 0) { cout << "\n"; }
+		HeadOfList = HeadOfList->Next;
+	}
+	cout << "\n文件创建或打开成功...\n";
 	//关闭文件
 	BinaryFile.close();
-
+	return FileName;
 }
 //将两个升序的二进制文件合并
-void CombineAscendingOrderBinaryFile(const char* File1, const char* File2)
+char* CombineAscendingOrderBinaryFile(const char* File1, const char* File2,char* CombinedFile)
 {
 	int LineFeed = 0;
 	double File1Data = 0.0, File2Data = 0.0;
@@ -98,7 +109,7 @@ void CombineAscendingOrderBinaryFile(const char* File1, const char* File2)
 	//输入文件名
 	cout << "请输入合并文件:";
 	CombinedFile = new char[100];
-	cin.getline(CombinedFile, 100);
+	cin >> CombinedFile;
 	//打开文件
 	BinaryFile1.open(File1, ios::in | ios::binary);
 	BinaryFile2.open(File2, ios::in | ios::binary);
@@ -151,7 +162,9 @@ void CombineAscendingOrderBinaryFile(const char* File1, const char* File2)
 	BinaryFile1.close();
 	BinaryFile2.close();
 	CombinedBinaryFile.close();
+	return CombinedFile;
 }
+
 
 //主函数.cpp
 #include <iostream>
@@ -161,11 +174,9 @@ using namespace std;
 int main()
 {
 	char* File1 = NULL, * File2 = NULL, * CombinedFile = NULL;
-	CreateAscendingOrderBinaryFile(File1);
-	cin.clear();
-	cin.sync();
-	CreateAscendingOrderBinaryFile(File2);
-	CombineAscendingOrderBinaryFile(File1, File2, CombinedFile);
+	File1 = CreateAscendingOrderBinaryFile(File1);
+	File2 = CreateAscendingOrderBinaryFile(File2);
+	CombinedFile = CombineAscendingOrderBinaryFile(File1, File2, CombinedFile);
 	delete[]File1;
 	delete[]File2;
 	delete[]CombinedFile;
