@@ -1,0 +1,72 @@
+//"标头.h"
+//单位员工的信息
+struct Staff { unsigned IDNumber; char StaffName[20]; char Telephone[20]; char LivingAddress[100]; unsigned PostalCode; Staff* Next; };
+//输入员工信息
+void InputStaffInformation(std::fstream&);
+//输出员工信息
+void OutputStaffInformation(std::fstream&);
+//创建职工的通讯录
+char* CreateAddressBook(char*);
+
+//实现.cpp
+#include <iostream>
+#include <fstream>
+#include "标头.h"
+using namespace std;
+const Staff StaffEnd = { 0,"None","None","None",0 };
+//输入员工信息
+void InputStaffInformation(std::fstream& File)
+{
+	Staff staff;
+	cout << "请输入员工的基本信息(编号,姓名,联系方式,居住地址及邮政编码):\n";
+	while (cin >> staff.IDNumber >> staff.StaffName >> staff.Telephone >> staff.LivingAddress >> staff.PostalCode) { File.write((char*)&staff, sizeof(Staff)); }
+	//文件结束标志
+	File.write((char*)&StaffEnd, sizeof(Staff));
+}
+//输出员工信息
+void OutputStaffInformation(std::fstream& File)
+{
+	Staff staff;
+	cout << "职工编号\t职工姓名\t联系方式\t居住地址\t邮政编码\n";
+	do
+	{
+		File.read((char*)&staff, sizeof(Staff));
+		if (staff.IDNumber != 0)
+		{
+			cout << staff.IDNumber << "\t" << staff.StaffName << "\t";
+			cout << staff.Telephone << "\t" << staff.LivingAddress << "\t" << staff.PostalCode << "\n";
+		}
+	} while (File && staff.IDNumber != 0);	//判断文件结束
+}
+//创建通讯录
+char* CreateAddressBook(char* FileName)
+{
+	Staff * HeadOfList = NULL;
+	fstream AddressBook;
+	//输入文件名
+	cout << "请输入文件:";
+	FileName = new char[100];
+	cin >> FileName;
+	//打开文件
+	AddressBook.open(FileName, ios::in | ios::out | ios::binary);
+	if (!AddressBook) { cerr << "文件创建或打开失败...\n"; abort(); }
+	//输入员工信息
+	InputStaffInformation(AddressBook);
+	//输出输入的所有员工信息
+	OutputStaffInformation(AddressBook);
+	//关闭文件
+	AddressBook.close();
+	return FileName;
+}
+
+//主函数.cpp
+#include <iostream>
+#include <fstream>
+#include "标头.h"
+using namespace std;
+int main()
+{	
+    char* File = NULL;
+	File = CreateAddressBook(File);
+	delete[]File;
+}
