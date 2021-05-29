@@ -10,6 +10,7 @@ char* CreateAddressBook(char*);
 
 //实现.cpp
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include "标头.h"
 using namespace std;
@@ -27,31 +28,44 @@ void InputStaffInformation(std::fstream& File)
 void OutputStaffInformation(std::fstream& File)
 {
 	Staff staff;
-	cout << "职工编号\t职工姓名\t联系方式\t居住地址\t邮政编码\n";
-	do
+	cout << "职工信息:\n";
+	cout.width(10); cout.setf(ios::left); cout << "职员编号";
+	cout.width(10); cout.setf(ios::left); cout << "职员姓名";
+	cout.width(20); cout.setf(ios::left); cout << "联系方式";
+	cout.width(20); cout.setf(ios::left); cout << "居住地址";
+	cout.width(20); cout.setf(ios::left); cout << "邮政编码" << "\n";	//这里的"\n"不能够连着与前面的内容一起写
+	while (File)	//判断文件结束
 	{
 		File.read((char*)&staff, sizeof(Staff));
 		if (staff.IDNumber != 0)
 		{
-			cout << staff.IDNumber << "\t" << staff.StaffName << "\t";
-			cout << staff.Telephone << "\t" << staff.LivingAddress << "\t" << staff.PostalCode << "\n";
+			cout.width(10); cout.setf(ios::left); cout << staff.IDNumber;
+			cout.width(10); cout.setf(ios::left); cout << staff.StaffName;
+			cout.width(20); cout.setf(ios::left); cout << staff.Telephone;
+			cout.width(20); cout.setf(ios::left); cout << staff.LivingAddress;
+			cout.width(20); cout.setf(ios::left); cout << staff.PostalCode << "\n";
 		}
-	} while (File && staff.IDNumber != 0);	//判断文件结束
+	}
 }
 //创建通讯录
 char* CreateAddressBook(char* FileName)
 {
-	Staff * HeadOfList = NULL;
+	Staff staff, * HeadOfList = NULL;
 	fstream AddressBook;
 	//输入文件名
 	cout << "请输入文件:";
 	FileName = new char[100];
 	cin >> FileName;
-	//打开文件
-	AddressBook.open(FileName, ios::in | ios::out | ios::binary);
+	//以写方式打开文件
+	//【注意】:"ios::in"成立的前提是文件存在,如果不存在在流会失败.
+	AddressBook.open(FileName, ios::out | ios::binary);
 	if (!AddressBook) { cerr << "文件创建或打开失败...\n"; abort(); }
 	//输入员工信息
 	InputStaffInformation(AddressBook);
+	//关闭文件
+	AddressBook.close();
+	//以读方式打开文件
+	AddressBook.open(FileName, ios::in | ios::binary);
 	//输出输入的所有员工信息
 	OutputStaffInformation(AddressBook);
 	//关闭文件
