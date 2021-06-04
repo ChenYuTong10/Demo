@@ -1,0 +1,107 @@
+//标头.h
+//修改文件
+void ModifyFile();
+//处理注释
+bool JudgeAnnotation(char, std::fstream&);
+//删除文本中的注释
+void DeleteTextAnnotation(std::fstream&);
+
+//实现.cpp
+#include <iostream>
+#include <fstream>
+#include "标头.h"
+using namespace std;
+//这里就不考虑创建了,因为如果创建,还需要有输入信息的过程,信息量不大,不好测试,这里将会使用草稿进行测试.
+// 判断注释
+bool JudgeAnnotation(char Word, fstream& File)
+{
+	//打开思路的地方是两种注释方法的第一个字符是"/"
+	if (Word == '/')
+	{
+		File.get(Word);	//再读取一个字符
+		if (Word != '/' && Word != '*') { File.seekg(-1, ios::cur); return false; }	//如果不是"//"或"/*"就返回"false",正常写入
+		else //处理注释的情况
+		{
+			//第一种是"//"的情况,返回"true",不要写入当前'/'字符
+			if (Word == '/') { while (File.get(Word)) { if (Word == '\n' || Word == EOF) { File.seekg(-1, ios::cur); break; } }return true; }
+			else //第二种是"/**/"的情况
+			{
+				while (File.get(Word))
+				{
+					if (Word == '*')
+					{
+						File.get(Word);
+						//不需要移动读指针
+						if (Word == '/') { return true; } //与上面"//"同理
+					}
+				}
+			}
+		}
+	}
+	else { return false; }
+}
+//删除文本中的注释
+void DeleteTextAnnotation(fstream& File)
+{
+	bool isAnnotation = false;
+	char Word = '\0', * DestinationFileName = NULL;
+	fstream DestinationFile;
+	//输入目标文件名
+	cout << "请输入目标文件:";
+	DestinationFileName = new char[100];
+	cin >> DestinationFileName;
+	//打开目标文件
+	DestinationFile.open(DestinationFileName, ios::out);
+	if (!DestinationFile) { cerr << "目标文件无法创建或打开...\n"; abort(); }
+	//写入信息(借鉴了答案的写法)
+	while (File.get(Word))
+	{
+		isAnnotation = JudgeAnnotation(Word, File);
+		if (isAnnotation == false) { DestinationFile.put(Word); }
+	}
+	//关闭目标文件
+	DestinationFile.close();
+	cout << "文件注释已删除...\n";
+	delete[]DestinationFileName;
+}
+//修改文件
+void ModifyFile()
+{
+	int Selector = 0;
+	bool TagToExit = false;
+	char FileName[100] = { '\0' };
+	fstream TextFile;
+	//输入处理文件名
+	cout << "请输入需要处理的文件:";
+	cin >> FileName;
+	//打开文件
+	TextFile.open(FileName, ios::in);
+	if (!TextFile) { cerr << "文件无法打开...\n"; abort(); }
+	//选择文件的处理方式
+	cout << "文件处理:1.删除文件注释 2.功能暂时未开发 3.关闭文件\t选择:";
+	while (1)
+	{
+		cin >> Selector;
+		switch (Selector)
+		{
+		case 1:; DeleteTextAnnotation(TextFile); break;
+		case 2: cout << "功能尚未齐全,我们正在努力,感谢您的使用...\n"; TagToExit = true; break;
+		case 3: cout << "欢迎下次使用,拜拜...\n"; TagToExit = true; break;
+		default: cout << "小伙计,你摁错了,再试一次?";
+		}
+		if (TagToExit == true) { break; }
+		else { cout << "请问还需要什么帮助吗...\t选择:"; }
+	}
+	//关闭文件
+	TextFile.close();
+}
+
+//主函数.cpp
+#include <iostream>
+#include <fstream>
+#include "标头.h"
+using namespace std;
+int main()
+{
+	ModifyFile();
+}
