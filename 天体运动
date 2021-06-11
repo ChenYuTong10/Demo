@@ -1,0 +1,135 @@
+#include <Windows.h>
+#include <tchar.h>
+#include <cmath>
+long RePaintTimes = 0;
+//水星信息
+POINT Mercury[400];
+long MercuryCentreX = 0;
+long MercuryCentreY = 0;
+//金星信息
+POINT Venus[400];
+long VenusCentreX = 0;
+long VenusCentreY = 0;
+//地球信息
+POINT Earth[400];
+long EarthCentreX = 0;
+long EarthCentreY = 0;
+//火星信息
+POINT Mars[400];
+long MarsCentreX = 0;
+long MarsCentreY = 0;
+//计算行星坐标
+void GetPlanetTrackCoordinate(POINT* PlanetTrack,int Radius)
+{
+	int TrackPoint = 0;
+	for (TrackPoint = 0; TrackPoint < 200; TrackPoint = TrackPoint + 1)	//只需要获得一半的圆周即可获得整个圆周
+	{
+		//绘制上半圆周
+		PlanetTrack[TrackPoint].x = (long)((Radius * 2 / 200) * (TrackPoint - 100));	//上半圆周左右各100个点
+		PlanetTrack[TrackPoint].y = (long)sqrt(Radius * Radius - PlanetTrack[TrackPoint].x * PlanetTrack[TrackPoint].x);
+		//绘制下半圆周
+		PlanetTrack[400 - TrackPoint - 1].x = PlanetTrack[TrackPoint].x;
+		PlanetTrack[400 - TrackPoint - 1].y = -PlanetTrack[TrackPoint].y;
+	}
+}
+//形成行星运行图
+void FormPlanetTrack(HDC hdc, POINT* Planet, int LeftTopX, int LeftTopY, int RightBottomX, int RightBottomY, int PlanetCentreX, int PlanetCentreY,int PlanetRadius, COLORREF PlanetColor)
+{
+	HPEN HPen;
+	HBRUSH HBrush;
+	HPen = CreatePen(PS_DASH, 1, RGB(0, 0, 0));
+	SelectObject(hdc, HPen);
+	HBrush = (HBRUSH)GetStockObject(NULL_BRUSH);	//使上一个画刷的效果不会影响到下一个画刷的效果
+	SelectObject(hdc, HBrush);	//记得选入设备环境
+	//使用虚线画出行星轨迹
+	Ellipse(hdc, LeftTopX, LeftTopY, RightBottomX, RightBottomY);
+	PlanetCentreX = Planet[RePaintTimes].x;
+	PlanetCentreY = Planet[RePaintTimes].y;
+	HPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+	SelectObject(hdc, HPen);
+	HBrush = CreateSolidBrush(PlanetColor);
+	SelectObject(hdc, HBrush);
+	//画出行星
+	Ellipse(hdc, PlanetCentreX - PlanetRadius, PlanetCentreY - PlanetRadius, PlanetCentreX + PlanetRadius, PlanetCentreY + PlanetRadius);
+	RePaintTimes = RePaintTimes + 1;
+	DeleteObject(HPen);
+	DeleteObject(HBrush);
+}
+LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	HDC hdc;
+	PAINTSTRUCT PaintingStruct;
+	HPEN hPen;
+	HBRUSH hBrush;
+	switch (message)
+	{
+	case WM_PAINT:
+		hdc = BeginPaint(hwnd, &PaintingStruct);
+		SetWindowOrgEx(hdc, -750, -450, NULL);	//在新的坐标原点下,默认的坐标原点为(-750,-450)
+		//单独画太阳
+		hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+		SelectObject(hdc, hPen);
+		hBrush = CreateSolidBrush(RGB(255, 0, 0));
+		SelectObject(hdc, hBrush);
+		Ellipse(hdc, -50, -50, 50, 50);
+		FormPlanetTrack(hdc, Mercury, -100, -100, 100, 100, MercuryCentreX, MercuryCentreY, 10, RGB(255, 0, 255));	//水星轨迹
+		FormPlanetTrack(hdc, Venus, -200, -200, 200, 200, VenusCentreX, VenusCentreY, 16, RGB(255, 215, 0));	//金星轨迹
+		FormPlanetTrack(hdc, Earth, -300, -300, 300, 300, EarthCentreX, EarthCentreY, 20, RGB(0, 0, 255));	//地球轨迹
+		FormPlanetTrack(hdc, Mars, -400, -400, 400, 400, MarsCentreX, MarsCentreY, 14, RGB(200, 0, 0));	//火星轨迹
+		DeleteObject(hPen);
+		DeleteObject(hBrush);
+		EndPaint(hwnd, &PaintingStruct);
+		Sleep(100);
+		if (RePaintTimes == 400) { RePaintTimes = 0; }	//使行星一直转下去
+		InvalidateRect(hwnd, NULL, 1);	//重新发送"WM_PAINT"请求
+		break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	default:
+		return DefWindowProcW(hwnd, message, wParam, lParam);
+	}
+	return 0;
+}
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInst, _In_ LPSTR lpszCmdLine, _In_ int nCmdShow)
+{
+	HWND hwnd;
+	MSG msg;
+	WNDCLASSEX wndclassex;
+	TCHAR lpszClassName[] = L"CelestialMovement";
+	TCHAR lpszClassTitle[] = L"天体运动";
+	wndclassex.cbSize = sizeof(WNDCLASSEX);
+	wndclassex.style = 0;
+	wndclassex.lpfnWndProc = WndProc;
+	wndclassex.cbClsExtra = 0;
+	wndclassex.cbWndExtra = 0;
+	wndclassex.hInstance = hInstance;
+	wndclassex.hIcon = LoadIcon(hInstance, IDI_APPLICATION);
+	wndclassex.hCursor = LoadCursorW(hInstance, IDC_ARROW);
+	wndclassex.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	wndclassex.lpszMenuName = NULL;
+	wndclassex.lpszClassName = lpszClassName;
+	wndclassex.hIconSm = LoadIcon(wndclassex.hInstance, IDI_APPLICATION);
+	if (!RegisterClassExW(&wndclassex))
+	{
+		MessageBox(NULL, L"窗口创建失败!", L"创建窗口", NULL);
+		return FALSE;
+	}
+	hwnd = CreateWindowW(lpszClassName, lpszClassTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+	ShowWindow(hwnd, nCmdShow);
+	UpdateWindow(hwnd);
+	//水星坐标
+	GetPlanetTrackCoordinate(Mercury, 100);
+	//金星坐标
+	GetPlanetTrackCoordinate(Venus, 200);
+	//地球坐标
+	GetPlanetTrackCoordinate(Earth, 300);
+	//地球坐标
+	GetPlanetTrackCoordinate(Mars, 400);
+	while (GetMessageW(&msg, NULL, 0, 0))
+	{
+		TranslateMessage(&msg);
+		DispatchMessageW(&msg);
+	}
+	return msg.wParam;
+}
