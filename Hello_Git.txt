@@ -1,0 +1,8 @@
+# 创建公钥
+ssh-keygen -t rsa -C "894104315@qq.com"
+
+# 连接远程仓库
+git remote add origin https://gitee.com/Chen-YuTongZero/fundamentals-of-programming
+
+# 拉取远程仓库的内容
+git pull origin master
