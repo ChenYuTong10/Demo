@@ -124,8 +124,8 @@ void FindStaffInAddressBook(const char* File)
 using namespace std;
 int main()
 {	
-    char* File = NULL;
+    	char* File = NULL;
 	File = CreateAddressBook(File);
-    FindStaffInAddressBook(File);
+    	FindStaffInAddressBook(File);
 	delete[]File;
 }
